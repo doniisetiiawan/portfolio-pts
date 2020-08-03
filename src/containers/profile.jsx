@@ -1,0 +1,103 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import React, { Component } from 'react';
+import styled from 'styled-components';
+import Link from '../components/Link/link';
+import List from '../components/List/list';
+
+const ProfileWrapper = styled.div`
+  width: 88%;
+  margin: 10px auto;
+`;
+
+const Avatar = styled.img`
+  width: 150px;
+`;
+
+class Profile extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      data: {},
+      repositories: [],
+      loading: true,
+      error: '',
+    };
+  }
+
+  componentDidMount = async () => {
+    try {
+      const profile = await fetch(
+        'https://api.github.com/users/doniisetiiawan',
+      );
+      const profileJSON = await profile.json();
+
+      if (profileJSON) {
+        const repositories = await fetch(
+          profileJSON.repos_url,
+        );
+        const repositoriesJSON = await repositories.json();
+
+        this.setState({
+          data: profileJSON,
+          repositories: repositoriesJSON,
+          loading: false,
+        });
+      }
+    } catch (error) {
+      this.setState({
+        loading: false,
+        error: error.message,
+      });
+    }
+  };
+
+  render() {
+    const {
+      data,
+      loading,
+      error,
+      repositories,
+    } = this.state;
+    if (loading || error) {
+      return <div>{loading ? 'Loading...' : error}</div>;
+    }
+
+    const items = [
+      {
+        label: 'html_url',
+        value: (
+          <Link url={data.html_url} title="Github URL" />
+        ),
+      },
+      { label: 'repos_url', value: data.repos_url },
+      { label: 'name', value: data.name },
+      { label: 'location', value: data.location },
+      {
+        label: 'email',
+        value: 'donisetiawan.050@gmail.com',
+      },
+      { label: 'bio', value: data.bio },
+    ];
+
+    const projects = repositories.map((repository) => ({
+      label: repository.name,
+      value: (
+        <Link
+          url={repository.html_url}
+          title="Github URL"
+        />
+      ),
+    }));
+
+    return (
+      <ProfileWrapper>
+        <Avatar src={data.avatar_url} alt="avatar" />
+        <List title="Profile" items={items} />
+        <List title="Projects" items={projects} />
+      </ProfileWrapper>
+    );
+  }
+}
+
+export default Profile;
